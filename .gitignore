@@ -1,0 +1,6 @@
+.env
+kafka.pem
+node_modules
+api-server/kafka.pem
+build-server/kafka.pem
+
