@@ -4,7 +4,7 @@ const httpProxy = require('http-proxy')
 const app = express()
 const PORT = 8000
 require('dotenv').config()
-const BASE_PATH = 'https://vrcl-outputs.s3.ap-south-1.amazonaws.com/__outputs'
+const BASE_PATH = process.env.BUCKET_URL
 
 const proxy = httpProxy.createProxy()
 
