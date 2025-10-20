@@ -17,10 +17,10 @@ const s3Client = new S3Client({
 })
 
 const PROJECT_ID = process.env.PROJECT_ID
-const DEPLOYMENT_ID = process.env.DEPLOYMENT_ID
+
 
 const kafka = new Kafka({
-    clientId: `docker-build-server-${DEPLOYMENT_ID}`,
+    clientId: `docker-build-server-${PROJECT_ID}`,
     brokers: [process.env.KAFKA_BROKER],
     ssl: {
         ca: [fs.readFileSync(path.join(__dirname, 'kafka.pem'), 'utf-8')]
@@ -34,7 +34,7 @@ const kafka = new Kafka({
 })
 const producer = kafka.producer()
 async function publishLog(log) {
-    await producer.send({ topic: `container-logs`, messages: [{ key: 'log', value: JSON.stringify({ PROJECT_ID, DEPLOYMENT_ID, log }) }] })
+    await producer.send({ topic: `container-logs`, messages: [{ key: 'log', value: JSON.stringify({ PROJECT_ID, log }) }] })
 }
 
 

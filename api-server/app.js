@@ -62,10 +62,11 @@ const config = {
 app.use(express.json())
 
 app.post("/project",async (req, res) => {
-    const {name, gitURL} = req.body
+    const {name, gitURL,customDomain} = req.body
+  
     const { data,error } = await supabase
   .from('project')
-  .insert({ name: name, git_url: gitURL,sub_domain: generateSlug() }).select()
+  .insert({ name: name, git_url: gitURL,sub_domain: generateSlug() ,custom_domain: customDomain?customDomain:null}).select()
     if (error) {
         res.status(500).json({ error: error.message })
     }
@@ -79,8 +80,9 @@ app.post('/deploy', async (req, res) => {
     const project = projects[0]
     console.log(" projectdetails",project)
     
-    const { data: deployments ,error } = await supabase.from('deployment').insert({ project_id: projectId, status: 'QUEUED' }).select()
+  
     // Spin the container
+    const { data: deployments ,error } = await supabase.from("project").update({ status: 'QUEUED' }).eq('id', projectId).select()
     const deployment = deployments[0]
     console.log(deployment)
     const command = new RunTaskCommand({
@@ -101,8 +103,7 @@ app.post('/deploy', async (req, res) => {
                     name: 'builder-image',
                     environment: [
                         { name: 'GIT_REPO', value: project.git_url },
-                        { name: 'PROJECT_ID', value: project.id},
-                        {name:'DEPLOYMENT_ID', value: deployment.id}
+                        { name: 'PROJECT_ID', value: project.id}
                         ]
                 }
             ]
@@ -111,7 +112,7 @@ app.post('/deploy', async (req, res) => {
 
     await ecsClient.send(command);
 
-    return res.json({ status: 'queued', data: { deployment, url: `http://${project.sub_domain}.localhost:8000` } })
+    return res.json({ status: 'queued', data: { deployment, url: `http://${deployment.sub_domain}.localhost:8000` } })
 
 })
 
@@ -145,12 +146,12 @@ async function initkafkaConsumer() {
             for (const message of messages) {
                 if (!message.value) continue;
                 const stringMessage = message.value.toString()
-                const { PROJECT_ID, DEPLOYMENT_ID, log } = JSON.parse(stringMessage)
-                console.log({ log, DEPLOYMENT_ID })
+                const { PROJECT_ID, log } = JSON.parse(stringMessage)
+                console.log({ log, PROJECT_ID })
                 try {
                     const { query_id } = await client.insert({
                         table: 'log_events',
-                        values: [{ event_id: uuidv4(), deployment_id: DEPLOYMENT_ID, log }],
+                        values: [{ event_id: uuidv4(), deployment_id: PROJECT_ID, log }],
                         format: 'JSONEachRow'
                     })
                     console.log(query_id)
