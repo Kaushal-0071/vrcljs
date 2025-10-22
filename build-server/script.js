@@ -4,10 +4,12 @@ const fs = require('fs')
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
 const mime = require('mime-types')
 const { Kafka } = require('kafkajs')
+const { createClient :supabaseclient }= require('@supabase/supabase-js') 
 
 
-
-
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = supabaseclient(supabaseUrl, supabaseKey)
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
@@ -53,6 +55,7 @@ async function init() {
 
     p.stdout.on('error', async function (data) {
         console.log('Error', data.toString())
+        const {error } = await supabase.from("project").update({ status: 'FAILED' }).eq('id', PROJECT_ID)
         await publishLog(`error: ${data.toString()}`)
     })
 
@@ -83,6 +86,8 @@ async function init() {
         }
         await publishLog(`Done`)
         console.log('Done...')
+         const {error } = await supabase.from("project").update({ status: 'DONE' }).eq('id', PROJECT_ID)
+         console.log(error)
         process.exit(0)
     })
 }

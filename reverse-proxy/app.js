@@ -2,10 +2,11 @@ const express = require('express')
 const httpProxy = require('http-proxy')
 const { createClient :supabaseclient } = require('@supabase/supabase-js')
 const app = express()
-const PORT = 8000
+const cors = require('cors')
+const PORT = process.env.PORT || 8000
 require('dotenv').config()
 const BASE_PATH = process.env.BUCKET_URL
-
+app.use(cors())
 const proxy = httpProxy.createProxy()
 const supabaseUrl = process.env.SUPABASE_URL
 const supabaseKey = process.env.SUPABASE_KEY;
